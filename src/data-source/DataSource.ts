@@ -1,17 +1,20 @@
 import "reflect-metadata"
 import { DataSource } from "typeorm"
-import { fluxUsers } from "./entity/User"
+import { cartusers } from "../entity/User"
+import config from "../config/config"
 
-const uri = "mongodb+srv://admin:admin@web0.jvf7ui1.mongodb.net/users"
+
 
 export const AppDataSource = new DataSource({
+
     type: "mongodb",
-    url: uri,
-    useNewUrlParser:true,
+    url: config.DB_URL,
+    useNewUrlParser: true,
     synchronize: false,
     logging: true,
     useUnifiedTopology: true,
-    entities: [fluxUsers],
+    entities: [cartusers],
     migrations: [],
-    subscribers: [],
+    subscribers: []
+   
 })

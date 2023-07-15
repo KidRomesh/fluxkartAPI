@@ -1,17 +1,28 @@
 import { Request, Response, NextFunction } from "express";
-import { AppDataSource } from "../../data-source";
-import { ObjectId } from 'mongodb';
-import { fluxUsers } from "../../entity/User";
+import { cartusers } from "../../entity/User";
 import Dayjs from "dayjs"
+import { AppDataSource } from "../../data-source/DataSource";
+import { DataSource } from "typeorm";
+import config from "../../config/config";
 
 
+const connect = new DataSource({
+    type: "mongodb",
+    url: config.DB_URL,
+    useNewUrlParser: true,
+    synchronize: false,
+    logging: true,
+    useUnifiedTopology: true,
+    entities: [cartusers],
+    migrations: [],
+    subscribers: [],
+});
 
 
+const getUsers = async (res: Response) => {
 
-const getUsers = async (req: Request, res: Response) => {
-
-    const userRepository = AppDataSource.getMongoRepository(fluxUsers);
-    const users = await userRepository.find({})
+    const userRepository = connect.getMongoRepository(cartusers);
+    const users = await userRepository.find();
 
     if (users == null) {
         res.status(404).send({
@@ -22,7 +33,8 @@ const getUsers = async (req: Request, res: Response) => {
     else {
 
         for (var i = 0; i < users.length; i++) {
-            res.status(200).send({
+            console.log(res)
+            return res.status(200).send({
 
 
                 "contact": {
@@ -51,7 +63,7 @@ async function update(email, mobile) {
 
 async function getEmail(email: any, res: Response) {
 
-    const userRepository = AppDataSource.getMongoRepository(fluxUsers);
+    const userRepository = AppDataSource.getMongoRepository(cartusers);
     const user = await userRepository.findOne({ where: { email: email } })
 
     if (user) {
@@ -86,7 +98,7 @@ async function getEmail(email: any, res: Response) {
 }
 
 async function getPhone(phone: any, res: Response) {
-    const userRepository = AppDataSource.getMongoRepository(fluxUsers);
+    const userRepository = AppDataSource.getMongoRepository(cartusers);
     const user = await userRepository.findOne({ where: { phoneNumber: phone } })
 
     if (user) {
@@ -124,7 +136,7 @@ async function create(mail: any, phone: any, res: Response) {
 
     const date = Dayjs().format('YYYY-MM-DD HH:mm:ss.SSS+ss')
     console.log("Inserting a new user into the database...")
-    const user1 = new fluxUsers()
+    const user1 = new cartusers()
     user1.id =
         user1.phoneNumber = phone
     user1.email = mail
@@ -154,7 +166,7 @@ const identify = async (req: Request, res: Response) => {
 
 
 
-    const userRepository = AppDataSource.getMongoRepository(fluxUsers);
+    const userRepository = AppDataSource.getMongoRepository(cartusers);
 
     var mail = req.body.email;
     var phone = req.body.phoneNumber
@@ -204,10 +216,10 @@ const identify = async (req: Request, res: Response) => {
                 getEmail(mailUser, res)
             }
             else {
-                if (mailUser != phoneUserMail && mailUserMobile == phoneUserMobile ){
-                    if(maillinkPreced == "Primary" && phoneLinkPreced == "Primary"){
-                        var mailUserCreated : any = user.createdAt
-                        var phoneUserCreated : any = userPhone.createdAt
+                if (mailUser != phoneUserMail && mailUserMobile == phoneUserMobile) {
+                    if (maillinkPreced == "Primary" && phoneLinkPreced == "Primary") {
+                        var mailUserCreated: any = user.createdAt
+                        var phoneUserCreated: any = userPhone.createdAt
                     }
                 }
             }
@@ -230,7 +242,7 @@ const identify = async (req: Request, res: Response) => {
 
 const deleteUser = async (req: Request, res: Response) => {
     var mail = req.body.email;
-    const userRepo = AppDataSource.getMongoRepository(fluxUsers);
+    const userRepo = AppDataSource.getMongoRepository(cartusers);
     const user = await userRepo.findOne({ where: { email: mail } });
     if (user != null) {
         await userRepo.remove(user);

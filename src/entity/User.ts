@@ -1,9 +1,9 @@
 import { Double } from "mongodb"
 import { Entity, ObjectIdColumn, ObjectId, Column } from "typeorm"
-import { Decimal128Extended } from "typeorm/driver/mongodb/bson.typings"
+
 
 @Entity()
-export class fluxUsers {
+export class cartusers {
 
     @ObjectIdColumn()
     Aid: ObjectId
@@ -18,7 +18,7 @@ export class fluxUsers {
     phoneNumber: string
 
     @Column()
-    linkedId: Double
+    linkedId: number
 
     @Column()
     linkPrecedence: string

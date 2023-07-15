@@ -6,8 +6,10 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import { DataSource } from "typeorm"
 import config from "./config/config";
-import { fluxUsers } from "./entity/User"
+import { cartusers } from "./entity/User"
 import userRoutes from "./Modules/Fluxusers/userRoutes";
+import  Dayjs  from "dayjs";
+
 
 
 
@@ -18,10 +20,10 @@ const connect = new DataSource({
     synchronize: false,
     logging: true,
     useUnifiedTopology: true,
-    entities: [fluxUsers],
+    entities: [cartusers],
     migrations: [],
     subscribers: [],
-})
+});
 
 connect.initialize().then(async () => {
 
@@ -54,14 +56,27 @@ connect.initialize().then(async () => {
         console.log(`The server is running in port ${config.port}`)
     );
 
+    // const date = Dayjs().format('YYYY-MM-DD HH:mm:ss.SSS+ss')
+    // console.log("Inserting a new user into the database...")
+    // const user1 = new cartusers()
+    // user1.id = 1
+    // user1.phoneNumber = "9092569807"
+    // user1.email = "romikhanna1301@gmail.com"
+    // user1.linkedId = 0
+    // user1.linkPrecedence = "Primary"
+    // user1.createdAt = date
+    // user1.updatedAt = ""
+    // user1.deletedAt = ""
+
+    // await connect.manager.save(user1)
 
     console.log("Loading users from the database...")
-    const users1 = connect.getMongoRepository(fluxUsers)
+    const users1 = connect.getMongoRepository(cartusers)
     const users = await users1.find()
     //const mail = "romikhanna1301@gmail.com"
 
-    // const user: any = await users1.findOne({ where: { email: mail  } });
+    // // const user: any = await users1.findOne({ where: { email: mail  } });
     console.log("Loaded users: ", users)
-    //console.log("Here you can setup and run express / fastify / any other framework.")
+    // //console.log("Here you can setup and run express / fastify / any other framework.")
 
 }).catch(error => console.log(error))

@@ -3,8 +3,9 @@ import express from "express";
 import userController from "./userController";
 
 const router = express.Router();
+var res: any
 
-router.get('/getAll', userController.getUsers);
+router.get('/getall', userController.getUsers);
 
 router.post('/identify', userController.identify);
 

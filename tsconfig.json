@@ -14,7 +14,7 @@
       "esModuleInterop": true,                 
       "forceConsistentCasingInFileNames": false,  
       "strict": false,
-      "allowSyntheticDefaultImports": true,
+      "allowSyntheticDefaultImports": true
                  
    }
 }
