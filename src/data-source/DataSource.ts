@@ -1,11 +1,11 @@
 import "reflect-metadata"
 import { DataSource } from "typeorm"
-import { cartusers } from "../entity/User"
+import { cartusers } from "../entity/cartusers"
 import config from "../config/config"
 
 
 
-export const AppDataSource = new DataSource({
+const AppDataSource = new DataSource({
 
     type: "mongodb",
     url: config.DB_URL,
@@ -18,3 +18,10 @@ export const AppDataSource = new DataSource({
     subscribers: []
    
 })
+
+export const connectDatabase = async () => {
+
+    const connection = await AppDataSource.initialize()
+  
+    return connection;
+  };
