@@ -78,7 +78,9 @@ async function validate(req: Request, res: Response, next: NextFunction) {
     if (user.length >= 1) {
 
         usermail = user.map(user => user.email)
+        usermail.push(mail)
         userPhone = user.map(user => user.phoneNumber)
+        userPhone.push(phone)
 
 
         const findVal = (acc: any, curr: any) => {
@@ -97,7 +99,7 @@ async function validate(req: Request, res: Response, next: NextFunction) {
             const updateUser = await update(req, res, next)
             return updateUser
         } else {
-            const secUser = await createSeondary(req, res, next)
+            const secUser = await createSecondary(req, res, next)
             return secUser
         }
     }
@@ -155,8 +157,8 @@ async function getUser(req: Request, res: Response, next: NextFunction) {
 
         }
     } else {
-        const updateUser = await update(req, res, next)
-        return updateUser
+        const validateUser = await validate(req, res, next)
+        return validateUser
     }
 
 }
@@ -174,7 +176,7 @@ async function create(req: Request, res: Response, next: NextFunction) {
     if (user.length == 0) {
         const user1 = new cartusers()
 
-        user1.id = Math.floor(Math.random() * 8) + 1
+        user1.id = Math.floor(Math.random() * 2) + 1
         user1.phoneNumber = phone
         user1.email = email
         user1.linkedId = null
@@ -203,7 +205,7 @@ async function create(req: Request, res: Response, next: NextFunction) {
 
 
 }
-async function createSeondary(req: Request, res: Response, next: NextFunction) {
+async function createSecondary(req: Request, res: Response, next: NextFunction) {
 
     var email = req.body.email
     var phone = req.body.phoneNumber
@@ -282,7 +284,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
         console.log(userfind, userfind1)
 
         let index = userfind
-        index = index == -1 ? index=userfind1 : index
+        index = index == -1 ? index = userfind1 : index
         console.log(index)
         let user2 = await userRepo.find({ where: { linkedId: user[index].id } })
         user2 = user2.length == 0 ? await userRepo.find({ where: { id: user[0].linkedId } }) : user2
@@ -369,6 +371,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
             const findlesser = await userCreated.reduce(findVal)
 
             const indexTo = userCreated.indexOf(findlesser)
+            console.log(indexTo)
 
             if (indexTo == -1) {
                 return res.status(500).json({
@@ -377,18 +380,30 @@ async function update(req: Request, res: Response, next: NextFunction) {
                     data: 'no data found'
                 });
             } else {
-                user[indexTo].email = email
-                user[indexTo].phoneNumber = phone
-                user[indexTo].updatedAt = date
-                user[indexTo].linkPrecedence = "Secondary"
-                user[indexTo].linkedId = user[indexTo - 1].id
+                if((user[indexTo].phoneNumber == user2[indexTo].phoneNumber)&&(user2[indexTo].phoneNumber != phone)){
+                    user[indexTo].phoneNumber = phone
+                    user[indexTo].updatedAt = date
+                    user[indexTo].linkPrecedence = "Secondary"
+                    user2[indexTo].phoneNumber = phone
+                    user2[indexTo]. updatedAt = date
+
+                }else{
+                    user[indexTo].email = email
+                    user[indexTo].updatedAt = date
+                    user[indexTo].linkPrecedence = "Secondary"
+                    user2[indexTo].email = email
+                    user2[indexTo]. updatedAt = date                    
+                }
+
+                
 
                 userRepo.save(user)
+                userRepo.save(user2)
                 return res.status(200).send({
                     "contact": {
-                        "primaryContactd": user[indexTo - 1].id,
-                        "emails": [user[indexTo - 1].email, user[indexTo].email],
-                        "phoneNumbers": [user[indexTo - 1].phoneNumber, user[0].phoneNumber],
+                        "primaryContactd": user2[indexTo].id,
+                        "emails": [user2[indexTo].email, user[indexTo].email],
+                        "phoneNumbers": [user2[indexTo].phoneNumber, user[indexTo].phoneNumber],
                         "secondaryContactIds": [user[indexTo].id]
                     }
                 })
@@ -399,7 +414,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
         }
 
     } else {
-        const createSec = await createSeondary(req, res, next)
+        const createSec = await createSecondary(req, res, next)
         return createSec
     }
 
