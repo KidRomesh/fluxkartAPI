@@ -64,15 +64,13 @@ async function validate(req: Request, res: Response, next: NextFunction) {
     const userRepository = (await coDB).getMongoRepository(cartusers)
     let user = await userRepository.find({ where: { phoneNumber: phone } })
     user = user.length == 0 ? (await userRepository.find({ where: { email: mail } })) : user
-    console.log("length", user.length)
-    // if (user.length == 0) {
-    //     console.log("inside IF")
-    //     user = await userRepository.find({ where: { email: mail } })
-    //     console.log(user)
-    //     return user
-    // }
 
-    console.log(user[0])
+    let user2 = await userRepository.find({ where: { email: mail } })
+    user2 = user2.length == 0 ? (await userRepository.find({ where: { phoneNumber: phone } })) : user
+
+    console.log("length", user.length)
+
+    console.log(user)
 
 
     if (user.length >= 1) {
@@ -96,11 +94,11 @@ async function validate(req: Request, res: Response, next: NextFunction) {
         const findSimPhone = userPhone.reduce(findVal)
         console.log(findSimPhone, findSimilar)
         if ((findSimilar === mail && findSimPhone === "new") || (findSimPhone === phone && findSimilar === "new")) {
-            const updateUser = await update(req, res, next)
-            return updateUser
-        } else {
             const secUser = await createSecondary(req, res, next)
             return secUser
+        } else {
+            const updateUser = await update(req, res, next)
+            return updateUser
         }
     }
 
@@ -176,7 +174,7 @@ async function create(req: Request, res: Response, next: NextFunction) {
     if (user.length == 0) {
         const user1 = new cartusers()
 
-        user1.id = Math.floor(Math.random() * 2) + 1
+        user1.id = Math.floor(Math.random() * 10000) + 10
         user1.phoneNumber = phone
         user1.email = email
         user1.linkedId = null
@@ -221,7 +219,7 @@ async function createSecondary(req: Request, res: Response, next: NextFunction) 
 
         const user1 = new cartusers()
 
-        user1.id = Math.floor(Math.random() * 8) + 1
+        user1.id = Math.floor(Math.random() * 10000) + 10
         user1.phoneNumber = phone
         user1.email = email
         user1.linkedId = user[0].id
@@ -260,160 +258,50 @@ async function update(req: Request, res: Response, next: NextFunction) {
     const userRepo = (await coDB).getMongoRepository(cartusers)
     let user = await userRepo.find({ where: { email: email } })
     user = user.length == 0 ? await userRepo.find({ where: { phoneNumber: phone } }) : user
-    console.log(user)
+    let user2 = await userRepo.find({ where: { phoneNumber: phone } })
+    user2 = user2.length ==0 ? await userRepo.find({ where: { email: email } }): user2
+    console.log(user, user2)
 
     let userLinkPreced = []
     userLinkPreced = user.map(user => user.linkPrecedence)
+    userLinkPreced = user2.map(user2 =>user2.linkPrecedence)
     let userCreated = []
     userCreated = user.map(user => user.createdAt)
+    userCreated = user2.map(user2 => user2.createdAt)
+
     let usermail = []
     usermail = user.map(user => user.email)
+    usermail = user2.map(user2 => user2.email)
     let userPhone = []
     userPhone = user.map(user => user.phoneNumber)
+    userPhone = user2.map(user2 => user2.phoneNumber)
 
-    let indexTO = userLinkPreced.indexOf("Secondary")
-    indexTO = indexTO == -1 ? userLinkPreced.indexOf("Primary") : indexTO
     console.log("from update")
     console.log(user)
+    if(userLinkPreced.indexOf("Secondary")== -1){
 
-    if (user.length >= 1) {
-        console.log("checked length ")
-        console.log(userLinkPreced)
-        let userfind = userLinkPreced.indexOf("Primary")
-        let userfind1 = userLinkPreced.indexOf("Secondary")
-        console.log(userfind, userfind1)
+        console.log("both are primary Hence changing secondary mark 2")
 
-        let index = userfind
-        index = index == -1 ? index = userfind1 : index
-        console.log(index)
-        let user2 = await userRepo.find({ where: { linkedId: user[index].id } })
-        user2 = user2.length == 0 ? await userRepo.find({ where: { id: user[0].linkedId } }) : user2
-        if ((user[0].id == user2[0].linkedId)) {
-            console.log("inside update second if")
+        let max = Math.max(...userCreated)
+        console.log(max)
+        
+        let min = Math.min(...userCreated)
+        console.log(min)
 
-            if ((usermail.indexOf(email) == -1 || userPhone.indexOf(phone) == -1)) {
+        let userSec = await userRepo.find({where:{createdAt: min}})
+        let userPrim = await userRepo.find({where:{createdAt: min}})
 
-                if (user[0].linkPrecedence == "Primary") {
-                    user[0].email = email
-                    user[0].phoneNumber = phone
-                    user[0].updatedAt = date
+        if(userSec){
+            userSec[0].email = email
+            userSec[0].phoneNumber = phone
+            userSec[0].linkPrecedence = "Secondary"
+            userSec[0].updatedAt = date
+            userSec[0].linkedId = userPrim[0].id
 
-                    if (usermail.indexOf(email) == -1) {
-                        user2[0].email = email
-                    } else {
-                        user2[0].phoneNumber = phone
-                    }
-
-
-                    userRepo.save(user)
-                    userRepo.save(user2)
-                    return res.status(200).send({
-                        "contact": {
-                            "primaryContactd": user[0].id,
-                            "emails": [user[0].email, user2[0].email],
-                            "phoneNumbers": [user[0].phoneNumber, user2[0].phoneNumber],
-                            "secondaryContactIds": [user2[0].id]
-                        }
-                    })
-
-                }
-            } else if (usermail.indexOf(email) == -1 || userPhone.indexOf(phone) == -1) {
-
-                if (user[0].linkPrecedence == "Secondary") {
-
-                    user[0].email = email
-                    user[0].phoneNumber = phone
-                    user[0].updatedAt = date
-
-                    if (usermail.indexOf(email) == -1) {
-                        user2[0].email = email
-                    } else {
-                        user2[0].phoneNumber = phone
-                    }
-                    userRepo.save(user)
-                    userRepo.save(user2)
-                    return res.status(200).send({
-                        "contact": {
-                            "primaryContactd": user[0].linkedId,
-                            "emails": [user2[0].email, user[0].email],
-                            "phoneNumbers": [user2[0].phoneNumber, user[0].phoneNumber],
-                            "secondaryContactIds": [user[0].id]
-                        }
-                    })
-
-                }
-            } else {
-                user[userfind1].email = email
-                user[userfind1].phoneNumber = phone
-                user[userfind1].updatedAt = date
-
-                userRepo.save(user)
-                return res.status(200).send({
-                    "contact": {
-                        "primaryContactd": user2[0].id,
-                        "emails": [user2[0].email, user[0].email],
-                        "phoneNumbers": [user2[0].phoneNumber, user[0].phoneNumber],
-                        "secondaryContactIds": [user[0].id]
-                    }
-                })
-            }
-
-
-        } else {
-
-            const findVal = (acc: any, curr: any) => {
-                if (acc > curr) {
-                    return curr
-                } else {
-                    return acc
-                }
-            }
-            const findlesser = await userCreated.reduce(findVal)
-
-            const indexTo = userCreated.indexOf(findlesser)
-            console.log(indexTo)
-
-            if (indexTo == -1) {
-                return res.status(500).json({
-                    status: 500,
-                    message: 'Internal server error',
-                    data: 'no data found'
-                });
-            } else {
-                if((user[indexTo].phoneNumber == user2[indexTo].phoneNumber)&&(user2[indexTo].phoneNumber != phone)){
-                    user[indexTo].phoneNumber = phone
-                    user[indexTo].updatedAt = date
-                    user[indexTo].linkPrecedence = "Secondary"
-                    user2[indexTo].phoneNumber = phone
-                    user2[indexTo]. updatedAt = date
-
-                }else{
-                    user[indexTo].email = email
-                    user[indexTo].updatedAt = date
-                    user[indexTo].linkPrecedence = "Secondary"
-                    user2[indexTo].email = email
-                    user2[indexTo]. updatedAt = date                    
-                }
-
-                
-
-                userRepo.save(user)
-                userRepo.save(user2)
-                return res.status(200).send({
-                    "contact": {
-                        "primaryContactd": user2[indexTo].id,
-                        "emails": [user2[indexTo].email, user[indexTo].email],
-                        "phoneNumbers": [user2[indexTo].phoneNumber, user[indexTo].phoneNumber],
-                        "secondaryContactIds": [user[indexTo].id]
-                    }
-                })
-            }
-
-
-
+            userRepo.save(userSec)
         }
 
-    } else {
+    }else {
         const createSec = await createSecondary(req, res, next)
         return createSec
     }
