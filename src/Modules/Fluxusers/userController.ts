@@ -128,15 +128,28 @@ async function getUser(req: Request, res: Response, next: NextFunction) {
         const linkPreced = user[0].linkPrecedence
         if (linkPreced == "Primary") {
             const user1 = await userRepository.find({ where: { linkedId: user[0].id } })
-            return res.status(200).send({
-                "contact": {
-                    "primaryContactd": user[0].id,
-                    "emails": [user1[0].email, user[0].email],
-                    "phoneNumbers": [user1[0].phoneNumber, user[0].phoneNumber],
-                    "secondaryContactIds": [user1[0].id]
-                }
+            if (user1.length == 0) {
+                return res.status(200).send({
+                    "contact": {
+                        "primaryContactd": user[0].id,
+                        "emails": [user[0].email],
+                        "phoneNumbers": [user[0].phoneNumber],
+                        "secondaryContactIds": []
+                    }
 
-            })
+                })
+            } else {
+                return res.status(200).send({
+                    "contact": {
+                        "primaryContactd": user[0].id,
+                        "emails": [user1[0].email, user[0].email],
+                        "phoneNumbers": [user1[0].phoneNumber, user[0].phoneNumber],
+                        "secondaryContactIds": [user1[0].id]
+                    }
+
+                })
+            }
+
 
         } else {
             console.log("getting linked ids")
@@ -259,12 +272,12 @@ async function update(req: Request, res: Response, next: NextFunction) {
     let user = await userRepo.find({ where: { email: email } })
     user = user.length == 0 ? await userRepo.find({ where: { phoneNumber: phone } }) : user
     let user2 = await userRepo.find({ where: { phoneNumber: phone } })
-    user2 = user2.length ==0 ? await userRepo.find({ where: { email: email } }): user2
+    user2 = user2.length == 0 ? await userRepo.find({ where: { email: email } }) : user2
     console.log(user, user2)
 
     let userLinkPreced = []
     userLinkPreced = user.map(user => user.linkPrecedence)
-    userLinkPreced = user2.map(user2 =>user2.linkPrecedence)
+    userLinkPreced = user2.map(user2 => user2.linkPrecedence)
     let userCreated = []
     userCreated = user.map(user => user.createdAt)
     userCreated = user2.map(user2 => user2.createdAt)
@@ -278,20 +291,20 @@ async function update(req: Request, res: Response, next: NextFunction) {
 
     console.log("from update")
     console.log(user)
-    if(userLinkPreced.indexOf("Secondary")== -1){
+    if (userLinkPreced.indexOf("Secondary") == -1) {
 
         console.log("both are primary Hence changing secondary mark 2")
 
         let max = Math.max(...userCreated)
         console.log(max)
-        
+
         let min = Math.min(...userCreated)
         console.log(min)
 
-        let userSec = await userRepo.find({where:{createdAt: min}})
-        let userPrim = await userRepo.find({where:{createdAt: min}})
+        let userSec = await userRepo.find({ where: { createdAt: min } })
+        let userPrim = await userRepo.find({ where: { createdAt: min } })
 
-        if(userSec){
+        if (userSec) {
             userSec[0].email = email
             userSec[0].phoneNumber = phone
             userSec[0].linkPrecedence = "Secondary"
@@ -301,7 +314,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
             userRepo.save(userSec)
         }
 
-    }else {
+    } else {
         const createSec = await createSecondary(req, res, next)
         return createSec
     }
