@@ -76,10 +76,12 @@ async function validate(req: Request, res: Response, next: NextFunction) {
     if (user.length >= 1) {
 
         usermail = user.map(user => user.email)
+        usermail = user2.map(user2 => user2.email)
         usermail.push(mail)
         userPhone = user.map(user => user.phoneNumber)
         userPhone.push(phone)
 
+        console.log(usermail, userPhone)
 
         const findVal = (acc: any, curr: any) => {
 
@@ -229,7 +231,10 @@ async function createSecondary(req: Request, res: Response, next: NextFunction) 
     user = user.length == 0 ? await userRepository.find({ where: { email: email } }) : user
 
     if (user.length == 1 && user[0].linkPrecedence == "Primary") {
+        const findVal = await update(req, res, next)
+        return findVal
 
+    } else {
         const user1 = new cartusers()
 
         user1.id = Math.floor(Math.random() * 10000) + 10
@@ -252,9 +257,7 @@ async function createSecondary(req: Request, res: Response, next: NextFunction) 
             }
 
         })
-    } else {
-        const findVal = await validate(req, res, next)
-        return findVal
+
     }
 
 
@@ -295,14 +298,9 @@ async function update(req: Request, res: Response, next: NextFunction) {
 
         console.log("both are primary Hence changing secondary mark 2")
 
-        let max = Math.max(...userCreated)
-        console.log(max)
 
-        let min = Math.min(...userCreated)
-        console.log(min)
-
-        let userSec = await userRepo.find({ where: { createdAt: max } })
-        let userPrim = await userRepo.find({ where: { createdAt: min } })
+        let userSec = await userRepo.find({ where: { email: email } })
+        let userPrim = await userRepo.find({ where: { phoneNumber:phone } })
 
         if (userSec) {
             userSec[0].email = email
@@ -312,13 +310,15 @@ async function update(req: Request, res: Response, next: NextFunction) {
             userSec[0].linkedId = userPrim[0].id
 
             userRepo.save(userSec)
-        }else if (userPrim){
-            userPrim[0].email = email
-            userPrim[0].phoneNumber = phone
-            userPrim[0].linkPrecedence = "Secondary"
-            userPrim[0].updatedAt = date
-            userPrim[0].linkedId = userPrim[0].id 
-            userRepo.save(userPrim)        
+            return res.status(200).send({
+                "contact": {
+                    "primaryContactd": userSec[0].linkedId,
+                    "emails": [user2[0].email, userSec[0].email],
+                    "phoneNumbers": [user2[0].phoneNumber, userSec[0].phoneNumber],
+                    "secondaryContactIds": [userSec[0].id]
+                }
+    
+            })
         }
 
     } else {
