@@ -301,7 +301,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
         let min = Math.min(...userCreated)
         console.log(min)
 
-        let userSec = await userRepo.find({ where: { createdAt: min } })
+        let userSec = await userRepo.find({ where: { createdAt: max } })
         let userPrim = await userRepo.find({ where: { createdAt: min } })
 
         if (userSec) {
@@ -312,6 +312,13 @@ async function update(req: Request, res: Response, next: NextFunction) {
             userSec[0].linkedId = userPrim[0].id
 
             userRepo.save(userSec)
+        }else if (userPrim){
+            userPrim[0].email = email
+            userPrim[0].phoneNumber = phone
+            userPrim[0].linkPrecedence = "Secondary"
+            userPrim[0].updatedAt = date
+            userPrim[0].linkedId = userPrim[0].id 
+            userRepo.save(userPrim)        
         }
 
     } else {
