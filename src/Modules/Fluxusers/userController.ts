@@ -63,23 +63,36 @@ async function validate(req: Request, res: Response, next: NextFunction) {
 
     const userRepository = (await coDB).getMongoRepository(cartusers)
     let user = await userRepository.find({ where: { phoneNumber: phone } })
-    user = user.length == 0 ? (await userRepository.find({ where: { email: mail } })) : user
+
 
     let user2 = await userRepository.find({ where: { email: mail } })
-    user2 = user2.length == 0 ? (await userRepository.find({ where: { phoneNumber: phone } })) : user
 
-    console.log("length", user.length)
 
-    console.log(user)
+    // console.log("length", user.length)
+
+    console.log(user, user2)
+
+    console.log()
 
 
     if (user.length >= 1) {
 
         usermail = user.map(user => user.email)
-        usermail = user2.map(user2 => user2.email)
         usermail.push(mail)
+        if (user2.length > 0) {
+            let user2mail = user2[0].email
+            usermail.push(user2mail)
+        }
+
+
         userPhone = user.map(user => user.phoneNumber)
+        if (user2.length > 0) {
+            let user2phone = user2[0].phoneNumber
+            userPhone.push(user2phone)
+        }
         userPhone.push(phone)
+
+
 
         console.log(usermail, userPhone)
 
@@ -186,10 +199,25 @@ async function create(req: Request, res: Response, next: NextFunction) {
     const userRepository = (await coDB).getMongoRepository(cartusers)
     let user = await userRepository.find({ where: { email: email } })
     user = user.length == 0 ? await userRepository.find({ where: { phoneNumber: phone } }) : user
+    const all = await userRepository.find()
+    let id: any
+
+    if (all.length == 0) {
+        id = 1
+    } else {
+
+        let indLast = all[all.length - 1]
+
+        let indLastId = indLast.id
+
+        id = +indLastId
+        id = id + 1
+
+    }
     if (user.length == 0) {
         const user1 = new cartusers()
 
-        user1.id = Math.floor(Math.random() * 10000) + 10
+        user1.id = id.toString()
         user1.phoneNumber = phone
         user1.email = email
         user1.linkedId = null
@@ -229,15 +257,26 @@ async function createSecondary(req: Request, res: Response, next: NextFunction) 
 
     let user = await userRepository.find({ where: { phoneNumber: phone } })
     user = user.length == 0 ? await userRepository.find({ where: { email: email } }) : user
+    const all = await userRepository.find()
+    let id: any
+
+
+
+    let indLast = all[all.length - 1]
+
+    let indLastId = indLast.id
+
+    id = +indLastId
+
+    id = id + 1
+
+
 
     if (user.length == 1 && user[0].linkPrecedence == "Primary") {
-        const findVal = await update(req, res, next)
-        return findVal
 
-    } else {
         const user1 = new cartusers()
 
-        user1.id = Math.floor(Math.random() * 10000) + 10
+        user1.id = id.toString()
         user1.phoneNumber = phone
         user1.email = email
         user1.linkedId = user[0].id
@@ -258,6 +297,10 @@ async function createSecondary(req: Request, res: Response, next: NextFunction) 
 
         })
 
+
+    } else {
+        const findVal = await update(req, res, next)
+        return findVal
     }
 
 
@@ -273,24 +316,33 @@ async function update(req: Request, res: Response, next: NextFunction) {
 
     const userRepo = (await coDB).getMongoRepository(cartusers)
     let user = await userRepo.find({ where: { email: email } })
-    user = user.length == 0 ? await userRepo.find({ where: { phoneNumber: phone } }) : user
+
     let user2 = await userRepo.find({ where: { phoneNumber: phone } })
-    user2 = user2.length == 0 ? await userRepo.find({ where: { email: email } }) : user2
+
     console.log(user, user2)
 
     let userLinkPreced = []
     userLinkPreced = user.map(user => user.linkPrecedence)
-    userLinkPreced = user2.map(user2 => user2.linkPrecedence)
+    let user2LinkPreced = user2[0].linkPrecedence
+    userLinkPreced.push(user2LinkPreced)
     let userCreated = []
     userCreated = user.map(user => user.createdAt)
-    userCreated = user2.map(user2 => user2.createdAt)
+    let user2Created = user2[0].createdAt
+    userCreated.push(user2Created)
 
     let usermail = []
-    usermail = user.map(user => user.email)
-    usermail = user2.map(user2 => user2.email)
+
     let userPhone = []
+
+
+    usermail = user.map(user => user.email)
+    let user2mail = user2[0].email
+    usermail.push(user2mail)
+
     userPhone = user.map(user => user.phoneNumber)
-    userPhone = user2.map(user2 => user2.phoneNumber)
+    let user2phone = user2[0].phoneNumber
+    userPhone.push(user2phone)
+
 
     console.log("from update")
     console.log(user)
@@ -300,9 +352,17 @@ async function update(req: Request, res: Response, next: NextFunction) {
 
 
         let userSec = await userRepo.find({ where: { email: email } })
-        let userPrim = await userRepo.find({ where: { phoneNumber:phone } })
+        let userPrim = await userRepo.find({ where: { phoneNumber: phone } })
 
-        if (userSec) {
+        let user2Date = userSec[0].id
+        let user1Date = userPrim[0].id
+
+        let userSecDate = +user2Date
+        let userPrimDate = +user1Date
+
+        console.log(userSecDate, userPrimDate)
+
+        if (userSecDate > userPrimDate) {
             userSec[0].email = email
             userSec[0].phoneNumber = phone
             userSec[0].linkPrecedence = "Secondary"
@@ -317,15 +377,29 @@ async function update(req: Request, res: Response, next: NextFunction) {
                     "phoneNumbers": [user2[0].phoneNumber, userSec[0].phoneNumber],
                     "secondaryContactIds": [userSec[0].id]
                 }
-    
+
+            })
+        } else {
+            userPrim[0].email = email
+            userPrim[0].phoneNumber = phone
+            userPrim[0].linkPrecedence = "Secondary"
+            userPrim[0].updatedAt = date
+            userPrim[0].linkedId = userSec[0].id
+
+            userRepo.save(userPrim)
+            return res.status(200).send({
+                "contact": {
+                    "primaryContactd": userPrim[0].linkedId,
+                    "emails": [userSec[0].email, userPrim[0].email],
+                    "phoneNumbers": [userSec[0].phoneNumber, userPrim[0].phoneNumber],
+                    "secondaryContactIds": [userPrim[0].id]
+                }
+
             })
         }
 
-    } else {
-        const createSec = await createSecondary(req, res, next)
-        return createSec
-    }
 
+    }
 
 
 }
@@ -382,8 +456,9 @@ const identify = async (req: Request, res: Response, next: NextFunction) => {
 
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     var mail = req.body.email;
+    var phone = req.body.phoneNumber
     const userRepo = connect.getMongoRepository(cartusers);
-    const user = await userRepo.findOne({ where: { email: mail } });
+    const user = await userRepo.findOne({ where: { email: mail } && { phoneNumber: phone } });
     if (user != null) {
         await userRepo.remove(user);
 

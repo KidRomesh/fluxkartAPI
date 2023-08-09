@@ -8,7 +8,7 @@ export class cartusers {
     Aid: ObjectId
 
     @Column()
-    id : number
+    id : string
 
     @Column()
     email: string
@@ -17,7 +17,7 @@ export class cartusers {
     phoneNumber: string
 
     @Column()
-    linkedId: number
+    linkedId: string
 
     @Column()
     linkPrecedence: string
