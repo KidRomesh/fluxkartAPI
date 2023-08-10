@@ -25,5 +25,8 @@
       "start": "ts-node src/index.ts",
       "typeorm": "typeorm-ts-node-commonjs",
       "dev": "nodemon"
-   }
+   },
+     "engines": {
+    "node": ">=18 <19"
+  }
 }
