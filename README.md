@@ -12,13 +12,13 @@ Hence no need to setup database in local system. The API is exposed and will be 
 Kindly follow the below steps and proceed ahead with the testing and to see the processing of the API.
 
 1. connect to the POSTMAN tool
-2. use the link (post): "http://ec2-13-126-200-69.ap-south-1.compute.amazonaws.com:6060/identify" and connect to the exposed API
+2. use the link (post): "https://fluxapidev.onrender.com/identify" and connect to the exposed API
 3. send data in the following format as a json
 {
 "email": "abc@gmail.com",
 "phoneNumber":"1234567890"
 }
-Note : no authorization is required this is an open API which is exposed through aws
+Note : no authorization is required this is an open API which is exposed through render
 
 You will get the valid response as below
 {
@@ -29,8 +29,8 @@ You will get the valid response as below
             "secondaryContactIds": [23]
         }
 }
-In case you need to know all the users (get): "http://ec2-13-126-200-69.ap-south-1.compute.amazonaws.com:6060/getall"
-Or if you wish to delete the user (post): "http://ec2-13-126-200-69.ap-south-1.compute.amazonaws.com:6060/delete"
+In case you need to know all the users (get): "https://fluxapidev.onrender.com/getall"
+Or if you wish to delete the user (post): "https://fluxapidev.onrender.com/delete"
 
 I would like to thank the Bitespeed team for providing me this opportunity to work on the task and complete it in flying colors.
 
